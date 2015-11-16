@@ -145,7 +145,8 @@ public class Server extends JFrame implements ActionListener {
             //init the VideoStream object:
             theServer.video = new VideoStream(VideoFileName);
             theServer.songfile = new MP3Object(VideoFileName);
-
+            
+            
             //init RTP socket
             theServer.RTPsocket = new DatagramSocket();
           }
@@ -199,7 +200,7 @@ public class Server extends JFrame implements ActionListener {
   public void actionPerformed(ActionEvent e) {
 
     //if the current image nb is less than the length of the video
-    if (imagenb < VIDEO_LENGTH)
+    if (imagenb < songfile.getSize())
       {
         //update current imagenb
         imagenb++;
