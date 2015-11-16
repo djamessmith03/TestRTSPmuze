@@ -1,3 +1,5 @@
+package RTSPtest;
+
 /*Client.java*/
 
 /* ------------------
@@ -57,7 +59,13 @@ public class Client{
 
   
   private SoundJLayer player;
+  private static final String DIRECTORY_ARCHIVE_TEMPORARY = "./temp/";
+  private static final String ARCHIVE_MP3_TEMPORARY = "music.mp3";
   final static String CRLF = "\r\n";
+  private long tamanhoactual;
+  
+  
+  public static FileOutputStream fileoutput;
 
   //Video constants:
   //------------------
@@ -124,16 +132,12 @@ public class Client{
     //get server RTSP port and IP address from the command line
     //------------------
     int RTSP_server_port = 5544;
-    String ServerHost = "localhost";
+    String ServerHost = "192.168.1.134";
     InetAddress ServerIPAddr = InetAddress.getByName(ServerHost);
 
     //get video filename to request:
     VideoFileName = "test.mp3";
-    File file = new File(".");
-    for(String fileNames : file.list()) System.out.println(fileNames);
-    //TO DO
-    //MAKE THIS SHIT WORK SON
-    //SongFileName = "TEST.wav";
+    
 
     //Establish a TCP connection with the server to exchange RTSP messages
     //------------------
@@ -145,6 +149,15 @@ public class Client{
 
     //init RTSP state:
     state = INIT;
+    
+    File tempdirectory = new File(DIRECTORY_ARCHIVE_TEMPORARY);
+    
+    if (!tempdirectory.exists())
+    {
+        tempdirectory.mkdir();
+        tempdirectory = null;
+    }
+    fileoutput = new FileOutputStream(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
   }
 
 
@@ -194,6 +207,7 @@ public class Client{
               {
                   //change RTSP state and print new state
                   state = READY;
+                  tamanhoactual = 0;
                   //System.out.println("New RTSP state: ....");
               }
           }//else if state != INIT then do nothing
@@ -357,9 +371,14 @@ public class Client{
         //display the image as an ImageIcon object
         //icon = new ImageIcon(image);
         //iconLabel.setIcon(icon);
-        if(player == null)
+        //fileoutput = new FileOutputStream(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
+        
+        tamanhoactual += payload.length;
+        fileoutput.write(payload);
+        fileoutput.flush();
+        if(player == null && tamanhoactual >=  15000) 
         {
-            player = new SoundJLayer(VideoFileName);
+            player = new SoundJLayer(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
             player.play();
         }
       }
