@@ -1,3 +1,10 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package RTSPtest;
+
 /* ------------------
    Server
    usage: java Server [RTSP listening port]
@@ -29,13 +36,13 @@ public class Server extends JFrame implements ActionListener {
   //Video variables:
   //----------------
   int imagenb = 0; //image nb of the image currently transmitted
-  VideoStream video; //VideoStream object used to access video frames
-  MusicStream music;    //music stream object for music (WIP)
+  //VideoStream video; //VideoStream object used to access video frames
+  //MusicStream music;    //music stream object for music (WIP)
   static int MPA_TYPE = 14; //RTP payload type for MPEG audio
   
   MP3Object songfile;
   
-  static int FRAME_PERIOD = 50; //Frame period of the video to stream, in ms
+  static int FRAME_PERIOD = 10; //Frame period of the video to stream, in ms
   static int VIDEO_LENGTH = 500; //length of the video in frames
 
   Timer timer; //timer used to send the images at the video frame rate
@@ -143,7 +150,7 @@ public class Server extends JFrame implements ActionListener {
             theServer.send_RTSP_response();
    
             //init the VideoStream object:
-            theServer.video = new VideoStream(VideoFileName);
+            //theServer.video = new VideoStream(VideoFileName);
             theServer.songfile = new MP3Object(VideoFileName);
             
             
