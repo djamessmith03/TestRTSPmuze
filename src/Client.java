@@ -47,6 +47,7 @@ public class Client{
   final static int INIT = 0;
   final static int READY = 1;
   final static int PLAYING = 2;
+  final static int PAUSED = 3;
   static int state; //RTSP state == INIT or READY or PLAYING
   Socket RTSPsocket; //socket used to send/receive RTSP messages
   //input and output stream filters
@@ -63,6 +64,7 @@ public class Client{
   private static final String ARCHIVE_MP3_TEMPORARY = "music.mp3";
   final static String CRLF = "\r\n";
   private long tamanhoactual;
+  private static int filecount = 0;
   
   
   public static FileOutputStream fileoutput;
@@ -113,7 +115,7 @@ public class Client{
 
     //init timer
     //--------------------------
-    timer = new Timer(20, new timerListener());
+    timer = new Timer(5, new timerListener());
     timer.setInitialDelay(0);
     timer.setCoalesce(true);
 
@@ -132,7 +134,7 @@ public class Client{
     //get server RTSP port and IP address from the command line
     //------------------
     int RTSP_server_port = 5544;
-    String ServerHost = "192.168.1.134";
+    String ServerHost = "localhost";
     InetAddress ServerIPAddr = InetAddress.getByName(ServerHost);
 
     //get video filename to request:
@@ -157,7 +159,8 @@ public class Client{
         tempdirectory.mkdir();
         tempdirectory = null;
     }
-    fileoutput = new FileOutputStream(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
+    fileoutput = new FileOutputStream(DIRECTORY_ARCHIVE_TEMPORARY + Integer.toString(filecount) + ARCHIVE_MP3_TEMPORARY);
+    
   }
 
 
@@ -248,14 +251,59 @@ public class Client{
                   
                   //start the timer
                   timer.start();
-                  if (player != null)
+                  
+                  
+                  
+                  /*if (player != null)
+                  {player
+                     
                        player.play();
+                  }*/
               }
-          } //else if state != READY then do nothing
+          }
+         
+          
           catch (Exception ex) {
               Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
           }
         }
+      else if (state == PAUSED)
+      {
+          try {
+              //increase RTSP sequence number
+              RTSPSeqNb = RTSPSeqNb++;
+              
+              
+              //Send PLAY message to the server
+              send_RTSP_request("PLAY");
+              
+              //Wait for the response
+              if (parse_server_response() != 200)
+                  System.out.println("Invalid Server Response");
+              else
+              {
+                  //change RTSP state and print out new state
+                  state=PLAYING;
+                  // System.out.println("New RTSP state: ...")
+                  
+                  //start the timer
+                  timer.restart();
+                  
+                  
+                  
+                  if (player != null)
+                  {
+                     
+                       player.play();
+                  }
+              }
+          }
+         
+          
+          catch (Exception ex) {
+              Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+          }
+      }
 
     }
   }
@@ -283,7 +331,7 @@ public class Client{
               else
               {
                   //change RTSP state and print out new state
-                  state= READY;
+                  state= PAUSED;
                   //System.out.println("New RTSP state: ...");
                   
                   //stop the timer
@@ -373,14 +421,39 @@ public class Client{
         //iconLabel.setIcon(icon);
         //fileoutput = new FileOutputStream(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
         
+        if (payload.length == 0)
+        {
+            System.out.println("finish receiving packets");
+            timer.stop();
+            return;
+        }
         tamanhoactual += payload.length;
         fileoutput.write(payload);
         fileoutput.flush();
-        if(player == null && tamanhoactual >=  15000) 
+        if((player == null && tamanhoactual >=   15000) ||( (player != null) && (player.isComplete()) && (tamanhoactual >= 15000)))  
         {
-            player = new SoundJLayer(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
+            
+            player = new SoundJLayer(DIRECTORY_ARCHIVE_TEMPORARY + Integer.toString(filecount)+ARCHIVE_MP3_TEMPORARY);
             player.play();
+            filecount++;
+            
+            fileoutput = new FileOutputStream(DIRECTORY_ARCHIVE_TEMPORARY + Integer.toString(filecount)+ARCHIVE_MP3_TEMPORARY);
+            
+            tamanhoactual = 0;
         }
+        
+        
+        /*else if (player != null)
+        {
+            if(player.isComplete())
+            {
+                fileoutput = new FileOutputStream(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
+                player = new SoundJLayer(DIRECTORY_ARCHIVE_TEMPORARY + ARCHIVE_MP3_TEMPORARY);
+                tamanhoactual = 0;
+                player.play();
+            }
+        }*/
+                
       }
       catch (InterruptedIOException iioe){
         //System.out.println("Nothing to read");
@@ -422,6 +495,7 @@ public class Client{
           tokens.nextToken(); //skip over the Session:
           RTSPid = Integer.parseInt(tokens.nextToken());
         }
+      
     }
     catch(Exception ex)
       {
